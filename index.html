@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>for arnav</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lora:ital,wght@0,400;0,500;1,400&family=VT323&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sky-top: #1a0a2e;
+  --sky-mid: #4a1a5e;
+  --sky-dusk: #c0503a;
+  --sky-horizon: #f0a060;
+  --hill-far: #2d5a3d;
+  --hill-mid: #3a7a4a;
+  --hill-near: #4a9a5a;
+  --ground: #5ab06a;
+  --river: #4488cc;
+  --river-shine: #88ccff;
+  --wood: #8B5E3C;
+  --wood-dark: #5C3D1E;
+  --wood-light: #C4884A;
+  --thatch: #C8A840;
+  --stone: #9a9080;
+  --stone-light: #c8c0b0;
+  --gold: #f0c040;
+  --gold-dim: #a07820;
+  --cream: #fdf5e0;
+  --cream-dim: rgba(253,245,224,0.7);
+  --panel-bg: rgba(20,12,8,0.82);
+  --sidebar-bg: rgba(30,18,8,0.95);
+  --btn-green: #4a8a3a;
+  --btn-green-h: #5aaa4a;
+  --btn-brown: #8B5E3C;
+  --btn-brown-h: #a07040;
+  --sidebar-w: 200px;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Lora', serif;
+  background: var(--sky-top);
+  color: var(--cream);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ═══════════════════════════════
+   LAYOUT
+═══════════════════════════════ */
+.app {
+  display: flex;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════
+   BACKGROUND SCENE (CSS art)
+═══════════════════════════════ */
+.scene-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Sky gradient */
+.sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    #1a0a2e 0%,
+    #3d1550 20%,
+    #7a2a6a 38%,
+    #c0503a 55%,
+    #e8803a 68%,
+    #f0a060 78%,
+    #f8c880 88%,
+    #fde8a0 100%
+  );
+}
+
+/* Stars */
+.stars-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 50%;
+}
+.star-dot {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle var(--td) ease-in-out infinite alternate;
+}
+@keyframes twinkle {
+  from { opacity: var(--tlo); }
+  to   { opacity: var(--thi); }
+}
+
+/* Sun/moon disc */
+.sun {
+  position: absolute;
+  width: 60px; height: 60px;
+  background: radial-gradient(circle, #ffe090 0%, #ffb030 60%, #ff8020 100%);
+  border-radius: 50%;
+  bottom: 28%;
+  right: 22%;
+  box-shadow: 0 0 40px rgba(255,160,60,0.6), 0 0 80px rgba(255,120,20,0.3);
+}
+
+/* Hills — layered */
+.hills {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%; height: 65%;
+}
+
+/* Far hill */
+.hill-far {
+  position: absolute;
+  bottom: 52%;
+  left: -5%;
+  width: 110%;
+  height: 35%;
+  background: #2a4a35;
+  border-radius: 50% 60% 0 0 / 80% 80% 0 0;
+}
+.hill-far-2 {
+  position: absolute;
+  bottom: 50%;
+  left: 30%;
+  width: 80%;
+  height: 30%;
+  background: #243d2e;
+  border-radius: 60% 40% 0 0 / 80% 80% 0 0;
+}
+
+/* Mid hills */
+.hill-mid {
+  position: absolute;
+  bottom: 38%;
+  left: -8%;
+  width: 70%;
+  height: 28%;
+  background: #3a6a48;
+  border-radius: 50% 60% 0 0 / 80% 80% 0 0;
+}
+.hill-mid-2 {
+  position: absolute;
+  bottom: 35%;
+  left: 40%;
+  width: 75%;
+  height: 25%;
+  background: #345e40;
+  border-radius: 55% 45% 0 0 / 80% 80% 0 0;
+}
+
+/* River */
+.river {
+  position: absolute;
+  bottom: 24%;
+  left: 10%;
+  width: 25%;
+  height: 18%;
+  background: linear-gradient(135deg, #3a78bb 0%, #5599dd 40%, #88bbee 60%, #3a78bb 100%);
+  border-radius: 40% 20% 60% 30%;
+  opacity: 0.85;
+}
+.river::after {
+  content: '';
+  position: absolute;
+  top: 30%; left: 20%;
+  width: 60%; height: 20%;
+  background: rgba(180,220,255,0.4);
+  border-radius: 50%;
+  transform: rotate(-15deg);
+}
+
+/* Near ground */
+.ground {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%; height: 32%;
+  background: linear-gradient(to bottom, #5ab06a 0%, #4a9a58 40%, #3d8048 100%);
+}
+.ground::before {
+  content: '';
+  position: absolute;
+  top: -8px; left: -5%;
+  width: 110%; height: 18px;
+  background: #6aba78;
+  border-radius: 50%;
+}
+
+/* Path */
+.path {
+  position: absolute;
+  bottom: 0;
+  left: 45%;
+  width: 12%;
+  height: 30%;
+  background: linear-gradient(to top, #c8a860 0%, #d4b870 60%, transparent 100%);
+  clip-path: polygon(20% 100%, 80% 100%, 95% 0%, 5% 0%);
+  opacity: 0.6;
+}
+
+/* ── TREES ── */
+.tree {
+  position: absolute;
+  bottom: 0;
+}
+.tree-trunk {
+  width: 8px; height: 20px;
+  background: var(--wood-dark);
+  margin: 0 auto;
+  border-radius: 2px;
+}
+.tree-top {
+  width: 0; height: 0;
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-bottom: 28px solid #2d7a3a;
+  margin: 0 auto;
+  position: relative;
+  top: 5px;
+}
+.tree-top::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: -12px;
+  width: 0; height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 22px solid #38944a;
+}
+
+/* ── BUILDINGS ── */
+.building {
+  position: absolute;
+  bottom: 29%;
+}
+
+/* House style */
+.house-body {
+  background: var(--wood);
+  border-radius: 3px 3px 0 0;
+  position: relative;
+}
+.house-roof {
+  width: 0; height: 0;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -100%);
+}
+.house-door {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--wood-dark);
+  border-radius: 50% 50% 0 0 / 40% 40% 0 0;
+}
+.house-window {
+  position: absolute;
+  background: #ffe8a0;
+  border: 2px solid var(--wood-dark);
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(255,220,100,0.8);
+  animation: windowglow 3s ease-in-out infinite alternate;
+}
+@keyframes windowglow {
+  from { box-shadow: 0 0 4px rgba(255,220,100,0.6); }
+  to   { box-shadow: 0 0 10px rgba(255,220,100,1); }
+}
+
+/* Watchtower */
+.tower-body {
+  background: var(--stone);
+  border: 2px solid var(--stone-light);
+}
+.tower-top {
+  background: var(--wood-dark);
+  border-radius: 3px 3px 0 0;
+}
+.tower-flag {
+  position: absolute;
+  top: 0; right: -2px;
+  width: 2px; height: 12px;
+  background: var(--wood-dark);
+}
+.tower-flag::after {
+  content: '';
+  position: absolute;
+  top: 1px; left: 2px;
+  width: 8px; height: 5px;
+  background: #e04030;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  animation: flagwave 2s ease-in-out infinite alternate;
+}
+@keyframes flagwave {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0.7); }
+}
+
+/* ── VILLAGERS (Spartan-helmeted!) ── */
+.villager {
+  position: absolute;
+  bottom: 31%;
+  animation: villager-walk var(--vd) ease-in-out infinite alternate;
+}
+@keyframes villager-walk {
+  from { transform: translateX(0) scaleX(1); }
+  to   { transform: translateX(var(--vx)) scaleX(var(--vf)); }
+}
+
+.villager-body {
+  width: 12px;
+  height: 16px;
+  border-radius: 3px 3px 8px 8px;
+  position: relative;
+  margin: 0 auto;
+}
+.villager-legs {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  margin: 0 auto;
+}
+.villager-leg {
+  width: 4px;
+  height: 8px;
+  border-radius: 0 0 2px 2px;
+  animation: leg-swing 0.8s ease-in-out infinite alternate;
+}
+.villager-leg:last-child {
+  animation-direction: alternate-reverse;
+}
+@keyframes leg-swing {
+  from { transform: rotate(-10deg); }
+  to   { transform: rotate(10deg); }
+}
+
+/* Spartan helmet — the star of the show */
+.spartan-helmet {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 12px;
+}
+.helmet-dome {
+  width: 14px; height: 10px;
+  background: linear-gradient(135deg, #c0a840 0%, #806820 60%, #504010 100%);
+  border-radius: 50% 50% 20% 20%;
+  position: relative;
+  border: 1px solid #d4bc50;
+}
+.helmet-crest {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 8px;
+  background: #cc2020;
+  border-radius: 50% 50% 0 0;
+}
+.helmet-crest::before {
+  content: '';
+  position: absolute;
+  top: -3px; left: -3px;
+  width: 9px; height: 4px;
+  background: #cc2020;
+  border-radius: 50% 50% 0 0;
+}
+.helmet-cheek {
+  position: absolute;
+  bottom: -3px;
+  width: 5px; height: 6px;
+  background: #806820;
+  border-radius: 0 0 50% 50%;
+}
+.helmet-cheek-l { left: -1px; }
+.helmet-cheek-r { right: -1px; }
+.helmet-nose {
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px; height: 5px;
+  background: #a08030;
+  border-radius: 0 0 2px 2px;
+}
+
+/* Smoke particles */
+.smoke {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(200,180,160,0.4);
+  animation: rise var(--sd) ease-out infinite;
+}
+@keyframes rise {
+  0%   { transform: translateY(0) scale(0.5); opacity: 0.5; }
+  100% { transform: translateY(-40px) scale(1.5); opacity: 0; }
+}
+
+/* ═══════════════════════════════
+   SIDEBAR
+═══════════════════════════════ */
+.sidebar {
+  position: relative;
+  z-index: 10;
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--sidebar-bg);
+  border-right: 3px solid var(--wood-dark);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Wood grain border effect */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 4px; height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--wood-light) 0px,
+    var(--wood) 4px,
+    var(--wood-dark) 8px,
+    var(--wood) 12px
+  );
+  opacity: 0.6;
+}
+
+.sidebar-header {
+  padding: 1rem 1rem 0.8rem;
+  background: linear-gradient(to bottom, rgba(139,94,60,0.4), transparent);
+  border-bottom: 2px solid rgba(139,94,60,0.5);
+  position: relative;
+}
+
+/* Decorative corner */
+.sidebar-header::before, .sidebar-header::after {
+  content: '✦';
+  position: absolute;
+  color: var(--gold-dim);
+  font-size: 0.6rem;
+}
+.sidebar-header::before { top: 6px; left: 6px; }
+.sidebar-header::after  { top: 6px; right: 14px; }
+
+.sidebar-title-small {
+  font-family: 'VT323', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 0.3rem;
+}
+.sidebar-title-big {
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gold);
+  text-align: center;
+  line-height: 1.3;
+  text-shadow: 0 0 10px rgba(240,192,64,0.4);
+}
+
+/* Nav scroll area */
+.nav-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.8rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.nav-scroll::-webkit-scrollbar { width: 3px; }
+.nav-scroll::-webkit-scrollbar-thumb { background: var(--wood); border-radius: 2px; }
+
+/* Day tab — game UI style */
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid rgba(139,94,60,0.3);
+  background: rgba(139,94,60,0.12);
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.nav-tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(240,192,64,0.08) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.nav-tab:hover::before, .nav-tab.active::before { opacity: 1; }
+.nav-tab:hover { border-color: rgba(139,94,60,0.7); background: rgba(139,94,60,0.25); }
+.nav-tab.active { border-color: var(--gold-dim); background: rgba(139,94,60,0.35); }
+
+.tab-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.tab-label {
+  font-family: 'VT323', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  color: var(--cream-dim);
+  line-height: 1.2;
+}
+.nav-tab.active .tab-label { color: var(--gold); }
+
+/* Unlock panel */
+.unlock-panel {
+  padding: 0.8rem;
+  border-top: 2px solid rgba(139,94,60,0.4);
+  background: rgba(0,0,0,0.3);
+}
+.unlock-title {
+  font-family: 'VT323', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+/* Parchment-style input */
+.unlock-input {
+  width: 100%;
+  background: rgba(253,245,224,0.08);
+  border: 1px solid var(--wood);
+  border-bottom: 2px solid var(--gold-dim);
+  color: var(--cream);
+  font-family: 'Lora', serif;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.5rem;
+  outline: none;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.4rem;
+  transition: border-color 0.2s;
+  border-radius: 3px;
+}
+.unlock-input:focus { border-color: var(--gold); }
+.unlock-input::placeholder { color: rgba(253,245,224,0.25); font-size: 0.7rem; }
+
+.unlock-btn {
+  width: 100%;
+  background: linear-gradient(to bottom, var(--btn-green), #3a7030);
+  border: 2px solid #2a5020;
+  border-bottom: 3px solid #1a3010;
+  color: var(--cream);
+  font-family: 'VT323', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.35rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: 4px;
+}
+.unlock-btn:hover { background: linear-gradient(to bottom, var(--btn-green-h), var(--btn-green)); transform: translateY(-1px); }
+.unlock-btn:active { transform: translateY(1px); border-bottom-width: 1px; }
+
+.unlock-msg {
+  font-family: 'VT323', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-align: center;
+  min-height: 0.9rem;
+  margin-top: 0.3rem;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.unlock-msg.err { color: #e05040; opacity: 1; }
+.unlock-msg.ok  { color: #80d060; opacity: 1; }
+
+/* ═══════════════════════════════
+   MAIN CONTENT
+═══════════════════════════════ */
+.main {
+  position: relative;
+  z-index: 5;
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+}
+.main::-webkit-scrollbar { width: 4px; }
+.main::-webkit-scrollbar-thumb { background: rgba(139,94,60,0.5); border-radius: 2px; }
+
+/* ── Day panels ── */
+.day-panel {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  animation: panelIn 0.5s ease forwards;
+}
+.day-panel.active { display: flex; }
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Parchment card ── */
+.parchment {
+  width: 100%;
+  background: var(--panel-bg);
+  border: 2px solid rgba(139,94,60,0.5);
+  border-radius: 6px;
+  padding: 1.5rem 1.2rem;
+  position: relative;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(253,245,224,0.05);
+}
+
+/* Corner ornaments */
+.parchment::before, .parchment::after {
+  font-size: 0.8rem;
+  color: var(--gold-dim);
+  position: absolute;
+}
+.parchment::before { content: '❧'; top: 8px; left: 10px; }
+.parchment::after  { content: '❧'; bottom: 8px; right: 10px; transform: rotate(180deg); }
+
+.card-eyebrow {
+  font-family: 'VT323', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 1.2rem;
+  text-shadow: 0 0 12px rgba(240,192,64,0.3);
+}
+.divider-rune {
+  text-align: center;
+  color: var(--gold-dim);
+  font-size: 0.7rem;
+  letter-spacing: 0.5em;
+  margin: 0.8rem 0;
+}
+
+/* Riddle text */
+.riddle-text {
+  font-size: 0.88rem;
+  font-style: italic;
+  line-height: 1.9;
+  color: var(--cream-dim);
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+.riddle-text em { color: var(--cream); font-style: normal; font-weight: 500; }
+
+/* Answer input */
+.answer-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+.answer-input {
+  width: 100%;
+  max-width: 180px;
+  background: rgba(253,245,224,0.06);
+  border: 1px solid rgba(139,94,60,0.5);
+  border-bottom: 2px solid var(--gold-dim);
+  color: var(--cream);
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  font-weight: 400;
+  text-align: center;
+  padding: 0.4rem;
+  outline: none;
+  letter-spacing: 0.2em;
+  transition: border-color 0.2s;
+  border-radius: 3px;
+}
+.answer-input:focus { border-color: var(--gold); }
+.answer-input::placeholder { color: rgba(253,245,224,0.2); font-size: 0.75rem; letter-spacing: 0.15em; }
+
+.answer-hint {
+  font-family: 'VT323', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+}
+
+.answer-btn {
+  background: linear-gradient(to bottom, #8B5E3C, #6B3E1C);
+  border: 2px solid #5C3D1E;
+  border-bottom: 3px solid #3C2010;
+  color: var(--cream);
+  font-family: 'VT323', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 0.4rem 1.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+.answer-btn:hover { background: linear-gradient(to bottom, #a07040, #8B5E3C); transform: translateY(-1px); }
+.answer-btn:active { transform: translateY(1px); border-bottom-width: 1px; }
+
+.answer-error {
+  font-family: 'VT323', monospace;
+  font-size: 0.7rem;
+  color: #e06040;
+  letter-spacing: 0.1em;
+  opacity: 0;
+  transition: opacity 0.3s;
+  min-height: 0.8rem;
+}
+.answer-error.show { opacity: 1; }
+
+/* ── Reveal ── */
+.reveal-card {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  animation: panelIn 0.6s ease forwards;
+}
+.reveal-card.show { display: flex; }
+
+.reveal-number {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(4rem, 18vw, 6.5rem);
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1;
+  text-shadow: 0 0 30px rgba(240,192,64,0.5), 0 0 60px rgba(240,192,64,0.2);
+  animation: numPulse 3s ease-in-out infinite;
+}
+@keyframes numPulse {
+  0%,100% { text-shadow: 0 0 20px rgba(240,192,64,0.4); }
+  50%      { text-shadow: 0 0 50px rgba(240,192,64,0.7), 0 0 80px rgba(240,192,64,0.3); }
+}
+
+.reveal-main {
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.8;
+  text-align: center;
+  color: var(--cream-dim);
+}
+.reveal-main em { color: var(--gold); font-style: normal; }
+
+.reveal-sub {
+  font-family: 'VT323', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  color: var(--gold-dim);
+  text-align: center;
+  line-height: 1.8;
+  text-transform: uppercase;
+}
+
+.personal-note {
+  width: 100%;
+  border-left: 3px solid var(--gold-dim);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.8;
+  color: var(--cream-dim);
+  background: rgba(240,192,64,0.04);
+  border-radius: 0 4px 4px 0;
+}
+.personal-note em { color: var(--cream); font-style: normal; }
+
+.fun-fact {
+  width: 100%;
+  background: rgba(139,94,60,0.15);
+  border: 1px solid rgba(139,94,60,0.35);
+  border-radius: 4px;
+  padding: 0.8rem;
+}
+.fun-fact-label {
+  font-family: 'VT323', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+.fun-fact-text {
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--cream-dim);
+}
+
+.tomorrow-note {
+  font-family: 'VT323', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  text-align: center;
+  margin-top: 0.3rem;
+}
+
+/* ═══════════════════════════════
+   WELCOME SCREEN (before day 1)
+═══════════════════════════════ */
+.welcome-card {
+  width: 100%;
+  max-width: 380px;
+}
+
+/* ═══════════════════════════════
+   MOBILE TWEAKS
+═══════════════════════════════ */
+@media (max-width: 480px) {
+  :root { --sidebar-w: 160px; }
+  .parchment { padding: 1.2rem 1rem; }
+  .riddle-text { font-size: 0.82rem; }
+  .sidebar-title-big { font-size: 0.85rem; }
+}
+@media (max-width: 360px) {
+  :root { --sidebar-w: 140px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ BACKGROUND SCENE ═══ -->
+<div class="scene-bg">
+  <div class="sky"></div>
+  <div class="stars-layer" id="starsLayer"></div>
+  <div class="sun"></div>
+
+  <div class="hills">
+    <div class="hill-far"></div>
+    <div class="hill-far-2"></div>
+    <div class="hill-mid"></div>
+    <div class="hill-mid-2"></div>
+    <div class="river"></div>
+    <div class="ground"></div>
+    <div class="path"></div>
+  </div>
+
+  <!-- Trees -->
+  <div class="tree" style="left:8%;bottom:29%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
+  <div class="tree" style="left:14%;bottom:30%"><div class="tree-top" style="border-bottom-color:#246030;border-left-width:12px;border-right-width:12px;border-bottom-width:22px;"></div><div class="tree-trunk" style="height:15px"></div></div>
+  <div class="tree" style="right:8%;bottom:28%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
+  <div class="tree" style="right:15%;bottom:30%"><div class="tree-top" style="border-bottom-color:#1e5028"></div><div class="tree-trunk"></div></div>
+  <div class="tree" style="right:23%;bottom:29%"><div class="tree-top" style="border-bottom-color:#2a6535;border-left-width:14px;border-right-width:14px;border-bottom-width:24px;"></div><div class="tree-trunk" style="height:18px;width:6px"></div></div>
+
+  <!-- Buildings -->
+  <!-- House 1 -->
+  <div class="building" style="left:20%;bottom:30%">
+    <div class="house-body" style="width:38px;height:28px">
+      <div class="house-roof" style="border-left-width:22px;border-right-width:22px;border-bottom:18px solid #8B3A2A;left:50%;transform:translate(-50%,-100%)"></div>
+      <div class="house-window" style="width:8px;height:8px;top:6px;left:4px"></div>
+      <div class="house-window" style="width:8px;height:8px;top:6px;right:4px"></div>
+      <div class="house-door" style="width:9px;height:14px;bottom:0;left:50%;transform:translateX(-50%)"></div>
+      <!-- Chimney smoke -->
+      <div class="smoke" style="width:6px;height:6px;top:-8px;left:6px;--sd:2s;animation-delay:0s"></div>
+      <div class="smoke" style="width:5px;height:5px;top:-8px;left:8px;--sd:2.5s;animation-delay:0.8s"></div>
+    </div>
+  </div>
+
+  <!-- Watchtower -->
+  <div class="building" style="right:28%;bottom:29%">
+    <div style="position:relative">
+      <div class="tower-top" style="width:22px;height:10px;position:relative">
+        <div class="tower-flag"></div>
+      </div>
+      <div class="tower-body" style="width:18px;height:36px;margin:0 auto">
+        <div class="house-window" style="width:6px;height:7px;top:6px;left:50%;transform:translateX(-50%)"></div>
+        <div class="house-window" style="width:6px;height:7px;top:20px;left:50%;transform:translateX(-50%)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- House 2 -->
+  <div class="building" style="right:12%;bottom:30%">
+    <div class="house-body" style="width:32px;height:24px;background:#6B4826">
+      <div class="house-roof" style="border-left-width:19px;border-right-width:19px;border-bottom:16px solid #C08030;left:50%;transform:translate(-50%,-100%)"></div>
+      <div class="house-window" style="width:7px;height:7px;top:5px;left:3px;animation-delay:1s"></div>
+      <div class="house-window" style="width:7px;height:7px;top:5px;right:3px;animation-delay:1.5s"></div>
+      <div class="house-door" style="width:8px;height:12px;bottom:0;left:50%;transform:translateX(-50%);background:#3C2010"></div>
+    </div>
+  </div>
+
+  <!-- Villagers with Spartan helmets! -->
+  <!-- Villager 1 -->
+  <div class="villager" style="left:35%;--vd:4s;--vx:12px;--vf:1">
+    <div style="position:relative;width:12px">
+      <div class="spartan-helmet">
+        <div class="helmet-dome"><div class="helmet-crest"></div><div class="helmet-cheek helmet-cheek-l"></div><div class="helmet-cheek helmet-cheek-r"></div><div class="helmet-nose"></div></div>
+      </div>
+      <div class="villager-body" style="background:#c05020;width:12px;height:14px"></div>
+    </div>
+    <div class="villager-legs"><div class="villager-leg" style="background:#6B3E1C"></div><div class="villager-leg" style="background:#6B3E1C"></div></div>
+  </div>
+
+  <!-- Villager 2 -->
+  <div class="villager" style="left:42%;--vd:5s;--vx:-10px;--vf:-1;animation-delay:1s">
+    <div style="position:relative;width:12px">
+      <div class="spartan-helmet">
+        <div class="helmet-dome" style="background:linear-gradient(135deg,#a09030 0%,#605010 60%,#302008 100%);border-color:#b8a440"><div class="helmet-crest" style="background:#1a60cc"></div><div class="helmet-cheek helmet-cheek-l" style="background:#605010"></div><div class="helmet-cheek helmet-cheek-r" style="background:#605010"></div><div class="helmet-nose" style="background:#807020"></div></div>
+      </div>
+      <div class="villager-body" style="background:#3a7a3a;width:12px;height:14px"></div>
+    </div>
+    <div class="villager-legs"><div class="villager-leg" style="background:#2a5a2a"></div><div class="villager-leg" style="background:#2a5a2a"></div></div>
+  </div>
+
+  <!-- Villager 3 — tiny, far back -->
+  <div class="villager" style="right:35%;bottom:33%;--vd:6s;--vx:8px;--vf:1;animation-delay:2s;transform:scale(0.7)">
+    <div style="position:relative;width:12px">
+      <div class="spartan-helmet">
+        <div class="helmet-dome" style="background:linear-gradient(135deg,#d0b040 0%,#907020 60%,#503010 100%)"><div class="helmet-crest" style="background:#8020a0"></div><div class="helmet-cheek helmet-cheek-l"></div><div class="helmet-cheek helmet-cheek-r"></div><div class="helmet-nose"></div></div>
+      </div>
+      <div class="villager-body" style="background:#b05050;width:12px;height:14px"></div>
+    </div>
+    <div class="villager-legs"><div class="villager-leg" style="background:#803030"></div><div class="villager-leg" style="background:#803030"></div></div>
+  </div>
+</div>
+<!-- ═══ END BACKGROUND ═══ -->
+
+<div class="app">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <p class="sidebar-title-small">✦ quest log ✦</p>
+      <p class="sidebar-title-big">Arnav's<br>30th</p>
+    </div>
+
+    <div class="nav-scroll" id="navItems"></div>
+
+    <div class="unlock-panel">
+      <p class="unlock-title">🗝 today's key</p>
+      <input class="unlock-input" type="text" id="unlockInput" placeholder="enter password..." autocomplete="off" />
+      <button class="unlock-btn" onclick="tryUnlock()">Unlock Day</button>
+      <p class="unlock-msg" id="unlockMsg"></p>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="main">
+
+    <!-- WELCOME (shown before anything unlocked beyond day 1) -->
+    <div class="day-panel active" id="panel-0">
+      <div class="parchment welcome-card">
+        <p class="card-eyebrow">✦ april 1st, 2026 ✦</p>
+        <p class="card-title">A Message Has Found You</p>
+        <div class="divider-rune">— ✦ —</div>
+
+        <p class="riddle-text">
+          They were the most feared soldiers the ancient world had ever seen.<br><br>
+          And yet, by their own law, a Spartan warrior could not vote,
+          could not own land, could not be considered a <em>full citizen</em> —
+          no matter how many battles he had won —
+          until he reached a particular age.<br><br>
+          The Spartans believed that only at this threshold
+          did a person become <em>worth listening to.</em>
+          A man was not formed before it.<br><br>
+          <em>You are arriving at it.</em><br><br>
+          What is the age?
+        </p>
+
+        <div class="divider-rune">— ✦ —</div>
+
+        <div class="answer-wrap" id="day1puzzle">
+          <input class="answer-input" type="number" id="day1input" placeholder="answer" autocomplete="off" />
+          <p class="answer-hint">enter a number</p>
+          <button class="answer-btn" onclick="checkDay1()">Reveal</button>
+          <p class="answer-error" id="day1error">The Spartans would disagree — look harder.</p>
+        </div>
+
+        <div class="reveal-card" id="day1reveal">
+          <p class="reveal-number">30</p>
+          <p class="reveal-main">
+            The Spartans knew what they were doing.<br>
+            So does whoever sent you this.
+          </p>
+          <div class="divider-rune">— ✦ —</div>
+          <p class="reveal-sub">
+            16 april 1996 → 16 april 2026<br>
+            thirty years · a threshold · a beginning
+          </p>
+          <div class="divider-rune">— ✦ —</div>
+          <p class="reveal-main">
+            You're turning <em>30.</em><br>
+            Someone thinks that deserves<br>celebrating every single day until it arrives.
+          </p>
+          <p class="tomorrow-note">⚔ a new key arrives tomorrow ⚔</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAY 2 -->
+    <div class="day-panel" id="panel-1">
+      <div class="parchment">
+        <p class="card-eyebrow">✦ april 2nd · day two ✦</p>
+        <p class="card-title">Romeo & Juliet</p>
+        <div class="divider-rune">— ✦ —</div>
+
+        <div id="day2puzzle">
+          <p class="riddle-text">
+            A lovestruck Romeo sings a streetsuss serenade,<br>
+            laying everybody low with a <em>_____</em> that he made.<br><br>
+            Dire Straits wrote this in <em>1980.</em><br>
+            Fill in the blank to unlock today.
+          </p>
+          <div class="answer-wrap">
+            <input class="answer-input" type="text" id="day2input" placeholder="one word" autocomplete="off" style="font-size:1.1rem;letter-spacing:0.1em" />
+            <button class="answer-btn" onclick="checkDay2()">Reveal</button>
+            <p class="answer-error" id="day2error">Listen more carefully.</p>
+          </div>
+        </div>
+
+        <div class="reveal-card" id="day2reveal">
+          <p class="reveal-main">
+            Dire Straits wrote Romeo & Juliet in <em>1980.</em><br>
+            That's exactly <em>30 years</em> before a decade<br>you've already lived all the way through.
+          </p>
+          <div class="divider-rune">— ✦ —</div>
+          <div class="personal-note">
+            "You introduced me to music like it was a secret you were letting me in on.
+            Not to show off — just because you wanted me to <em>hear</em> it too."
+          </div>
+          <div class="fun-fact">
+            <p class="fun-fact-label">✦ field notes</p>
+            <p class="fun-fact-text">Mark Knopfler wrote Romeo & Juliet after a real breakup. He played it to the person it was about before releasing it. She didn't like it. The rest of the world did.</p>
+          </div>
+          <p class="tomorrow-note">⚔ 13 days remaining ⚔</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAY 3 -->
+    <div class="day-panel" id="panel-2">
+      <div class="parchment">
+        <p class="card-eyebrow">✦ april 3rd · day three ✦</p>
+        <p class="card-title">Fade Into You</p>
+        <div class="divider-rune">— ✦ —</div>
+
+        <div id="day3puzzle">
+          <p class="riddle-text">
+            Mazzy Star released <em>Fade Into You</em> in 1993.<br><br>
+            You were born in 1996.<br><br>
+            How many years after this song<br>did you arrive into the world?
+          </p>
+          <div class="answer-wrap">
+            <input class="answer-input" type="number" id="day3input" placeholder="answer" autocomplete="off" />
+            <p class="answer-hint">enter a number</p>
+            <button class="answer-btn" onclick="checkDay3()">Reveal</button>
+            <p class="answer-error" id="day3error">1996 minus 1993...</p>
+          </div>
+        </div>
+
+        <div class="reveal-card" id="day3reveal">
+          <p class="reveal-main">
+            The song existed <em>3 years</em> before you did.<br>
+            And you're turning <em>30.</em><br>
+            The same digits — just bigger now.
+          </p>
+          <div class="divider-rune">— ✦ —</div>
+          <div class="personal-note">
+            "You always give me the better side of the bed, even when I don't ask.
+            You do it quietly, without making it a thing.
+            <em>That's the kind of person you are.</em>"
+          </div>
+          <div class="fun-fact">
+            <p class="fun-fact-label">✦ field notes</p>
+            <p class="fun-fact-text">Fade Into You was recorded almost entirely in one take. Hope Sandoval barely moved during the recording. Some things don't need to be perfected to be exactly right.</p>
+          </div>
+          <p class="tomorrow-note">⚔ 12 days remaining ⚔</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── STARS ──
+(function(){
+  const l = document.getElementById('starsLayer');
+  for(let i=0;i<80;i++){
+    const s=document.createElement('div');
+    s.className='star-dot';
+    const sz=Math.random()*1.6+0.4;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--td:${2+Math.random()*4}s;--tlo:${0.05+Math.random()*0.2};--thi:${0.4+Math.random()*0.5};animation-delay:${Math.random()*5}s`;
+    l.appendChild(s);
+  }
+})();
+
+// ── STATE ──
+const PASSWORDS = ['saturn','juliet','fade'];
+const DAY_ICONS = ['🏛️','🎸','🌊'];
+const TOTAL = 3;
+
+function getState(){
+  try{
+    const s=JSON.parse(localStorage.getItem('arnav30')||'{}');
+    return{unlocked:s.unlocked||[0],active:s.active??0,solved:s.solved||[]};
+  }catch(e){return{unlocked:[0],active:0,solved:[]};}
+}
+function saveState(s){localStorage.setItem('arnav30',JSON.stringify(s));}
+
+let state=getState();
+
+// ── NAV ──
+function daysLabel(idx){
+  const d=15-idx;
+  if(d===0)return'🎉 A-Day!';
+  return`${d} day${d!==1?'s':''} to A-Day`;
+}
+
+function buildNav(){
+  const nav=document.getElementById('navItems');
+  nav.innerHTML='';
+  state.unlocked.forEach(idx=>{
+    const btn=document.createElement('button');
+    btn.className='nav-tab'+(idx===state.active?' active':'');
+    btn.innerHTML=`<span class="tab-icon">${DAY_ICONS[idx]||'✦'}</span><span class="tab-label">${daysLabel(idx)}</span>`;
+    btn.onclick=()=>switchDay(idx);
+    nav.appendChild(btn);
+  });
+}
+
+function switchDay(idx){
+  state.active=idx;
+  saveState(state);
+  document.querySelectorAll('.day-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+idx).classList.add('active');
+  buildNav();
+  restoreSolved();
+}
+
+function restoreSolved(){
+  if(state.solved.includes(0))showReveal('day1puzzle','day1reveal');
+  if(state.solved.includes(1))showReveal('day2puzzle','day2reveal');
+  if(state.solved.includes(2))showReveal('day3puzzle','day3reveal');
+}
+
+function showReveal(puzzleId,revealId){
+  const p=document.getElementById(puzzleId);
+  const r=document.getElementById(revealId);
+  if(p)p.style.display='none';
+  if(r)r.classList.add('show');
+}
+
+// ── UNLOCK ──
+function tryUnlock(){
+  const val=document.getElementById('unlockInput').value.trim().toLowerCase();
+  const msg=document.getElementById('unlockMsg');
+  msg.className='unlock-msg';
+  msg.textContent='';
+
+  const idx=PASSWORDS.indexOf(val);
+  if(idx===-1){
+    msg.className='unlock-msg err';
+    msg.textContent='Wrong password!';
+    setTimeout(()=>{msg.className='unlock-msg';msg.textContent='';},2000);
+    return;
+  }
+  if(state.unlocked.includes(idx)){
+    switchDay(idx);
+    msg.className='unlock-msg ok';
+    msg.textContent='Switching...';
+    setTimeout(()=>{msg.className='unlock-msg';msg.textContent='';},1500);
+    document.getElementById('unlockInput').value='';
+    return;
+  }
+  state.unlocked.push(idx);
+  state.unlocked.sort((a,b)=>a-b);
+  state.active=idx;
+  saveState(state);
+  buildNav();
+  switchDay(idx);
+  msg.className='unlock-msg ok';
+  msg.textContent='Day unlocked! ✦';
+  setTimeout(()=>{msg.className='unlock-msg';msg.textContent='';},2500);
+  document.getElementById('unlockInput').value='';
+}
+
+document.getElementById('unlockInput').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock();});
+
+// ── PUZZLE CHECKS ──
+function checkDay1(){
+  const val=document.getElementById('day1input').value.trim();
+  if(val==='30'){
+    state.solved=[...new Set([...state.solved,0])];
+    saveState(state);
+    showReveal('day1puzzle','day1reveal');
+  } else {
+    const e=document.getElementById('day1error');
+    e.classList.add('show');
+    setTimeout(()=>e.classList.remove('show'),2500);
+  }
+}
+document.getElementById('day1input').addEventListener('keydown',e=>{if(e.key==='Enter')checkDay1();});
+
+function checkDay2(){
+  const val=document.getElementById('day2input').value.trim().toLowerCase();
+  if(['love','lovesong','love song','song'].includes(val)){
+    state.solved=[...new Set([...state.solved,1])];
+    saveState(state);
+    showReveal('day2puzzle','day2reveal');
+  } else {
+    const e=document.getElementById('day2error');
+    e.classList.add('show');
+    setTimeout(()=>e.classList.remove('show'),2500);
+  }
+}
+document.getElementById('day2input').addEventListener('keydown',e=>{if(e.key==='Enter')checkDay2();});
+
+function checkDay3(){
+  const val=document.getElementById('day3input').value.trim();
+  if(val==='3'){
+    state.solved=[...new Set([...state.solved,2])];
+    saveState(state);
+    showReveal('day3puzzle','day3reveal');
+  } else {
+    const e=document.getElementById('day3error');
+    e.classList.add('show');
+    setTimeout(()=>e.classList.remove('show'),2500);
+  }
+}
+document.getElementById('day3input').addEventListener('keydown',e=>{if(e.key==='Enter')checkDay3();});
+
+// ── INIT ──
+buildNav();
+restoreSolved();
+</script>
+</body>
+</html>
