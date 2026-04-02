@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 3 — Places</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f2ede8;
+    --surface: #faf7f4;
+    --border: #d8d0c6;
+    --border-light: #e8e2db;
+    --gold: #8a7355;
+    --gold-dim: #b0a090;
+    --text: #2a2420;
+    --text-dim: #8a8078;
+    --green: #4a6e50;
+    --tile-gap: 3px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Cormorant Garamond', serif;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── Sidebar ── */
+
+  /* ── Main content ── */
+  .main {
+    margin-left: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem 1.5rem 4rem;
+    min-height: 100vh;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 2rem;
+    max-width: 500px;
+    width: 100%;
+  }
+
+  .day-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-top: 0.5rem;
+    font-weight: 300;
+  }
+
+  /* ── Progress ── */
+  .progress {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 2rem;
+    align-items: center;
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.4s;
+  }
+  .dot.active { background: var(--gold); }
+  .dot.solved { background: var(--green); }
+
+  /* ── Puzzle card ── */
+  .puzzle-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 440px;
+    margin-bottom: 1.5rem;
+    transition: opacity 0.4s;
+  }
+  .puzzle-card.locked {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .place-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.15em;
+    color: var(--gold-dim);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+
+  /* ── Tile grid ── */
+  .tile-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/4;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .tile-grid {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    gap: var(--tile-gap);
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+    background: var(--border);
+  }
+  .tile-grid:active { cursor: grabbing; }
+  .tile-grid.grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+  }
+  .tile-grid.grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+  }
+
+  .tile {
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition: box-shadow 0.15s ease;
+    position: relative;
+  }
+  .tile.dragging {
+    opacity: 0.8;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    z-index: 10;
+  }
+  .tile.drag-over {
+    box-shadow: inset 0 0 0 2px var(--gold);
+  }
+
+  /* ── Solved overlay ── */
+  .solved-overlay {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    filter: blur(12px) brightness(0.7);
+    transform: scale(1.04);
+    transition: opacity 1.8s ease, filter 2s ease, transform 2s ease;
+    pointer-events: none;
+  }
+  .solved-overlay.visible {
+    opacity: 1;
+    filter: blur(0px) brightness(1);
+    transform: scale(1);
+  }
+
+  /* ── Guess area ── */
+  .guess-area {
+    margin-top: 1.1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .guess-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.55rem 0.85rem;
+    color: var(--text);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .guess-input:focus { border-color: var(--gold-dim); }
+  .guess-input::placeholder { color: var(--text-dim); font-style: italic; }
+  .guess-input.correct { border-color: var(--green); background: #f4f8f4; }
+  .guess-input.wrong { border-color: #b07070; animation: shake 0.3s ease; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  .guess-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.55rem 0.9rem;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    text-transform: uppercase;
+  }
+  .guess-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  .feedback {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    font-style: italic;
+    min-height: 1.2em;
+    color: var(--text-dim);
+  }
+  .feedback.correct { color: var(--green); }
+  .feedback.wrong { color: #a06060; }
+
+  /* ── Caption ── */
+  .solved-caption {
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border-light);
+    font-size: 0.92rem;
+    color: var(--text-dim);
+    font-style: italic;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 0.9s ease 0.6s, transform 0.9s ease 0.6s;
+    line-height: 1.5;
+  }
+  .solved-caption.visible { opacity: 1; transform: translateY(0); }
+
+  .hint {
+    margin-top: 0.7rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    opacity: 0.5;
+  }
+
+  /* ── All solved banner ── */
+  .all-solved {
+    display: none;
+    text-align: center;
+    margin-top: 1rem;
+    padding: 1.5rem;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    background: var(--surface);
+    max-width: 440px;
+    width: 100%;
+  }
+  .all-solved.visible { display: block; }
+  .all-solved p {
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .all-solved .password-reveal {
+    margin-top: 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="main">
+  <div class="header">
+    <div class="day-label">Day 3 · April 3</div>
+    <h1>places we keep returning to</h1>
+    <p class="subtitle">put each one back together, then name where it is</p>
+  </div>
+
+  <div class="progress">
+    <div class="dot active" id="dot-0"></div>
+    <div class="dot" id="dot-1"></div>
+    <div class="dot" id="dot-2"></div>
+    <div class="dot" id="dot-3"></div>
+    <div class="dot" id="dot-4"></div>
+  </div>
+
+  <!-- Place 1 -->
+  <div class="puzzle-card" id="card-0">
+    <div class="place-number">Place 01 of 05</div>
+    <div class="tile-wrapper">
+      <div class="tile-grid grid-3" id="grid-0" data-idx="0"></div>
+      <div class="solved-overlay" id="overlay-0" style="background-image:url('./images/cubbon-park.jpg')"></div>
+    </div>
+    <p class="hint">drag tiles to rearrange · then name the place</p>
+    <div class="guess-area">
+      <input class="guess-input" id="input-0" type="text" placeholder="where is this…" autocomplete="off"/>
+      <button class="guess-btn" onclick="checkGuess(0)">→</button>
+    </div>
+    <div class="feedback" id="feedback-0"></div>
+    <div class="solved-caption" id="caption-0">I can spend the whole day looking at the yellow tree with you.</div>
+  </div>
+
+  <!-- Place 2 -->
+  <div class="puzzle-card locked" id="card-1">
+    <div class="place-number">Place 02 of 05</div>
+    <div class="tile-wrapper">
+      <div class="tile-grid grid-3" id="grid-1" data-idx="1"></div>
+      <div class="solved-overlay" id="overlay-1" style="background-image:url('./images/skyline-olympia.jpg')"></div>
+    </div>
+    <p class="hint">drag tiles to rearrange · then name the place</p>
+    <div class="guess-area">
+      <input class="guess-input" id="input-1" type="text" placeholder="where is this…" autocomplete="off"/>
+      <button class="guess-btn" onclick="checkGuess(1)">→</button>
+    </div>
+    <div class="feedback" id="feedback-1"></div>
+    <div class="solved-caption" id="caption-1">I miss everything — the red couch, the kitchen, and the better bedside you let me have.</div>
+  </div>
+
+  <!-- Place 3 -->
+  <div class="puzzle-card locked" id="card-2">
+    <div class="place-number">Place 03 of 05</div>
+    <div class="tile-wrapper">
+      <div class="tile-grid grid-3" id="grid-2" data-idx="2"></div>
+      <div class="solved-overlay" id="overlay-2" style="background-image:url('./images/cafe-lota.jpg')"></div>
+    </div>
+    <p class="hint">drag tiles to rearrange · then name the place</p>
+    <div class="guess-area">
+      <input class="guess-input" id="input-2" type="text" placeholder="where is this…" autocomplete="off"/>
+      <button class="guess-btn" onclick="checkGuess(2)">→</button>
+    </div>
+    <div class="feedback" id="feedback-2"></div>
+    <div class="solved-caption" id="caption-2">Discussing experiential startup ideas here with you was the best.</div>
+  </div>
+
+  <!-- Place 4 -->
+  <div class="puzzle-card locked" id="card-3">
+    <div class="place-number">Place 04 of 05</div>
+    <div class="tile-wrapper">
+      <div class="tile-grid grid-3" id="grid-3" data-idx="3"></div>
+      <div class="solved-overlay" id="overlay-3" style="background-image:url('./images/kailash-hills.jpg')"></div>
+    </div>
+    <p class="hint">drag tiles to rearrange · then name the place</p>
+    <div class="guess-area">
+      <input class="guess-input" id="input-3" type="text" placeholder="where is this…" autocomplete="off"/>
+      <button class="guess-btn" onclick="checkGuess(3)">→</button>
+    </div>
+    <div class="feedback" id="feedback-3"></div>
+    <div class="solved-caption" id="caption-3">Rain or sun didn't matter when I woke up beside you here.</div>
+  </div>
+
+  <!-- Place 5 -->
+  <div class="puzzle-card locked" id="card-4">
+    <div class="place-number">Place 05 of 05</div>
+    <div class="tile-wrapper">
+      <div class="tile-grid grid-3" id="grid-4" data-idx="4"></div>
+      <div class="solved-overlay" id="overlay-4" style="background-image:url('./images/sunder-nursery.jpg')"></div>
+    </div>
+    <p class="hint">drag tiles to rearrange · then name the place</p>
+    <div class="guess-area">
+      <input class="guess-input" id="input-4" type="text" placeholder="where is this…" autocomplete="off"/>
+      <button class="guess-btn" onclick="checkGuess(4)">→</button>
+    </div>
+    <div class="feedback" id="feedback-4"></div>
+    <div class="solved-caption" id="caption-4">You, me and the briefcase chatai here in the winter sun.</div>
+  </div>
+
+  <div class="all-solved" id="all-solved">
+    <p>New day, new place? New puzzle haha.</p>
+  </div>
+
+</div>
+
+<script>
+const PUZZLES = [
+  { src: './images/cubbon-park.jpg', answers: ['cubbon','cubbon park','yellow tree'], grid: 3 },
+  { src: './images/skyline-olympia.jpg', answers: ['skyline','skyline olympia','olympia','bangalore house','bangalore flat','blr house','blr flat'], grid: 3 },
+  { src: './images/cafe-lota.jpg', answers: ['cafe lota','lota cafe'], grid: 3 },
+  { src: './images/kailash-hills.jpg', answers: ['65 kailash hills','kailash hills','delhi flat','delhi house'], grid: 3 },
+  { src: './images/sunder-nursery.jpg', answers: ['sunder nursery'], grid: 3 }
+];
+
+const solved = [false, false, false, false, false];
+
+// Build all grids
+PUZZLES.forEach((puz, idx) => {
+  buildGrid(idx);
+});
+
+function buildGrid(idx) {
+  const grid = document.getElementById('grid-' + idx);
+  const n = PUZZLES[idx].grid;
+  const total = n * n;
+
+  let order = Array.from({length: total}, (_, i) => i);
+  // Shuffle until not in solved order
+  do {
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+  } while (order.every((v, i) => v === i));
+
+  order.forEach((posIdx, tileIdx) => {
+    const col = posIdx % n;
+    const row = Math.floor(posIdx / n);
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.style.backgroundImage = "url('" + PUZZLES[idx].src + "')";
+    tile.style.backgroundSize = (n * 100) + '% ' + (n * 100) + '%';
+    tile.style.backgroundPosition = bgPos(col, row, n);
+    tile.draggable = true;
+    tile.addEventListener('dragstart', onDragStart);
+    tile.addEventListener('dragover', onDragOver);
+    tile.addEventListener('drop', onDrop);
+    tile.addEventListener('dragend', onDragEnd);
+    grid.appendChild(tile);
+  });
+
+  setupTouch(grid, idx);
+}
+
+function bgPos(col, row, n) {
+  if (n === 1) return '0% 0%';
+  return (col * 100 / (n - 1)) + '% ' + (row * 100 / (n - 1)) + '%';
+}
+
+function isSolvedGrid(grid, n) {
+  return [...grid.children].every((tile, i) => {
+    const col = i % n;
+    const row = Math.floor(i / n);
+    return tile.style.backgroundPosition === bgPos(col, row, n);
+  });
+}
+
+// Drag
+let dragSrc = null;
+
+function onDragStart(e) {
+  dragSrc = e.currentTarget;
+  dragSrc.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+function onDrop(e) {
+  e.preventDefault();
+  const dst = e.currentTarget;
+  dst.classList.remove('drag-over');
+  if (!dragSrc || dragSrc === dst) return;
+  swapTiles(dragSrc, dst);
+  const grid = dst.closest('.tile-grid');
+  const idx = parseInt(grid.dataset.idx);
+  if (isSolvedGrid(grid, PUZZLES[idx].grid)) onGridSolved(idx);
+}
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.tile').forEach(t => t.classList.remove('drag-over'));
+}
+
+function swapTiles(a, b) {
+  const tmpPos = a.style.backgroundPosition;
+  const tmpSize = a.style.backgroundSize;
+  const tmpImg = a.style.backgroundImage;
+  a.style.backgroundPosition = b.style.backgroundPosition;
+  a.style.backgroundSize = b.style.backgroundSize;
+  a.style.backgroundImage = b.style.backgroundImage;
+  b.style.backgroundPosition = tmpPos;
+  b.style.backgroundSize = tmpSize;
+  b.style.backgroundImage = tmpImg;
+}
+
+// Touch drag
+function setupTouch(grid, idx) {
+  let srcTile = null;
+  let clone = null;
+  let startX, startY;
+
+  grid.addEventListener('touchstart', e => {
+    const tile = e.target.closest('.tile');
+    if (!tile) return;
+    e.preventDefault();
+    srcTile = tile;
+    srcTile.classList.add('dragging');
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+  }, { passive: false });
+
+  grid.addEventListener('touchmove', e => {
+    e.preventDefault();
+  }, { passive: false });
+
+  grid.addEventListener('touchend', e => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    const dst = el?.closest('.tile');
+    if (dst && dst !== srcTile) {
+      swapTiles(srcTile, dst);
+      if (isSolvedGrid(grid, PUZZLES[idx].grid)) onGridSolved(idx);
+    }
+    if (srcTile) srcTile.classList.remove('dragging');
+    srcTile = null;
+  }, { passive: false });
+}
+
+function onGridSolved(idx) {
+  const grid = document.getElementById('grid-' + idx);
+  grid.style.pointerEvents = 'none';
+  setTimeout(() => {
+    document.getElementById('overlay-' + idx).classList.add('visible');
+  }, 200);
+}
+
+// Guess checking
+function checkGuess(idx) {
+  const input = document.getElementById('input-' + idx);
+  const feedback = document.getElementById('feedback-' + idx);
+  const caption = document.getElementById('caption-' + idx);
+  const val = input.value.trim().toLowerCase();
+  if (!val) return;
+
+  if (PUZZLES[idx].answers.includes(val)) {
+    input.classList.remove('wrong');
+    input.classList.add('correct');
+    input.disabled = true;
+    feedback.textContent = 'you got it.';
+    feedback.className = 'feedback correct';
+
+    // Show caption if it has content
+    if (caption.textContent.trim()) caption.classList.add('visible');
+
+    // Reveal image
+    document.getElementById('overlay-' + idx).classList.add('visible');
+    document.getElementById('grid-' + idx).style.pointerEvents = 'none';
+
+    // Update dot
+    document.getElementById('dot-' + idx).className = 'dot solved';
+
+    solved[idx] = true;
+
+    // Unlock next
+    if (idx + 1 < 5) {
+      setTimeout(() => {
+        document.getElementById('card-' + (idx + 1)).classList.remove('locked');
+        document.getElementById('dot-' + (idx + 1)).classList.add('active');
+      }, 800);
+    }
+
+    // Check all done
+    if (solved.every(Boolean)) {
+      setTimeout(() => {
+        document.getElementById('all-solved').classList.add('visible');
+      }, 1200);
+    }
+  } else {
+    input.classList.remove('correct');
+    input.classList.add('wrong');
+    feedback.textContent = 'try again.';
+    feedback.className = 'feedback wrong';
+    setTimeout(() => input.classList.remove('wrong'), 400);
+  }
+}
+
+document.querySelectorAll('.guess-input').forEach((inp, idx) => {
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') checkGuess(idx); });
+});
+</script>
+</body>
+</html>
