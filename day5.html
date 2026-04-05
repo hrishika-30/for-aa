@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 4</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Clear+Sans:wght@400;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #87a878;
+    --border: #6b8a5e;
+    --tile-border-empty: #8fad80;
+    --tile-border-filled: #5c7a50;
+    --correct: #538d4e;
+    --present: #b59f3b;
+    --absent: #3a3a3c;
+    --key-bg: #5c7a50;
+    --key-text: #f5f0e8;
+    --tile-text: #f5f0e8;
+  }
+
+  body {
+    background-color: var(--bg);
+    font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    color: #1a1a1a;
+  }
+
+  header {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 0;
+    margin-bottom: 6px;
+  }
+
+  header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1rem;
+    color: #1a1a1a;
+  }
+
+  #toast-container {
+    position: fixed;
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .toast {
+    background: #1a1a1a;
+    color: #f5f0e8;
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.05rem;
+    opacity: 1;
+    transition: opacity 0.4s;
+    white-space: nowrap;
+  }
+
+  .toast.fade-out { opacity: 0; }
+
+  #board-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0 4px;
+  }
+
+  #board {
+    display: grid;
+    grid-template-rows: repeat(6, 52px);
+    grid-template-columns: repeat(5, 52px);
+    gap: 5px;
+  }
+
+  .tile {
+    width: 52px;
+    height: 52px;
+    border: 2px solid var(--tile-border-empty);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--tile-text);
+    text-transform: uppercase;
+    user-select: none;
+    position: relative;
+  }
+
+  .tile[data-letter] { border-color: var(--tile-border-filled); }
+
+  .tile.pop { animation: pop 0.1s ease-in-out; }
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+
+  .tile.shake { animation: shake 0.5s ease; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 50%, 90% { transform: translateX(-4px); }
+    30%, 70%      { transform: translateX(4px); }
+  }
+
+  .tile.flip { animation: flip 0.5s ease forwards; }
+  @keyframes flip {
+    0%   { transform: rotateX(0deg); }
+    50%  { transform: rotateX(-90deg); background: transparent; border-color: var(--tile-border-filled); }
+    100% { transform: rotateX(0deg); }
+  }
+
+  .tile.bounce { animation: bounce 0.6s ease forwards; }
+  @keyframes bounce {
+    0%   { transform: translateY(0); }
+    40%  { transform: translateY(-22px); }
+    60%  { transform: translateY(-11px); }
+    80%  { transform: translateY(-5px); }
+    100% { transform: translateY(0); }
+  }
+
+  .tile.correct { background: var(--correct); border-color: var(--correct); }
+  .tile.present { background: var(--present); border-color: var(--present); }
+  .tile.absent  { background: var(--absent);  border-color: var(--absent); }
+
+  #keyboard {
+    width: 100%;
+    max-width: 460px;
+    padding: 0 6px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .kb-row {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .key {
+    height: 50px;
+    min-width: 36px;
+    padding: 0 4px;
+    border: none;
+    border-radius: 4px;
+    background: var(--key-bg);
+    color: var(--key-text);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    letter-spacing: 0.03rem;
+    transition: filter 0.1s;
+  }
+
+  .key:active { filter: brightness(0.85); }
+  .key.wide { min-width: 54px; font-size: 0.7rem; }
+
+  .key.correct { background: var(--correct); }
+  .key.present { background: var(--present); }
+  .key.absent  { background: #2d4a24; color: #6b8a5e; }
+
+  /* Reveal card */
+  #overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 400;
+  }
+  #overlay.visible { display: block; }
+
+  #reveal-card {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0;
+    background: #f5f0e8;
+    border-radius: 4px;
+    padding: 36px 44px;
+    text-align: center;
+    z-index: 500;
+    max-width: 320px;
+    width: 90%;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  #reveal-card.visible { display: block; }
+  #reveal-card.shown {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  #reveal-card .main-line {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.35rem;
+    font-style: italic;
+    color: #2a3a22;
+    margin-bottom: 18px;
+    line-height: 1.55;
+  }
+
+  #reveal-card .date-line {
+    font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14rem;
+    text-transform: uppercase;
+    color: #5c7a50;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Wordle</h1>
+</header>
+
+<div id="toast-container"></div>
+
+<div id="board-container">
+  <div id="board"></div>
+</div>
+
+<div id="keyboard">
+  <div class="kb-row" id="row1"></div>
+  <div class="kb-row" id="row2"></div>
+  <div class="kb-row" id="row3"></div>
+</div>
+
+<div id="overlay"></div>
+<div id="reveal-card">
+  <div class="main-line" id="reveal-main"></div>
+  <div class="date-line">April 5th &nbsp;·&nbsp; 11 days to go</div>
+</div>
+
+<script>
+const WORD = "PLATS";
+const MAX_GUESSES = 6;
+const WORD_LENGTH = 5;
+
+const KB_ROWS = [
+  ["Q","W","E","R","T","Y","U","I","O","P"],
+  ["A","S","D","F","G","H","J","K","L"],
+  ["Enter","Z","X","C","V","B","N","M","⌫"]
+];
+
+let currentRow = 0;
+let currentCol = 0;
+let currentGuess = [];
+let gameOver = false;
+let tiles = [];
+let keyMap = {};
+
+// Build board
+const board = document.getElementById("board");
+for (let r = 0; r < MAX_GUESSES; r++) {
+  tiles[r] = [];
+  for (let c = 0; c < WORD_LENGTH; c++) {
+    const tile = document.createElement("div");
+    tile.classList.add("tile");
+    board.appendChild(tile);
+    tiles[r][c] = tile;
+  }
+}
+
+// Build keyboard
+KB_ROWS.forEach((row, i) => {
+  const rowEl = document.getElementById(`row${i+1}`);
+  row.forEach(k => {
+    const btn = document.createElement("button");
+    btn.classList.add("key");
+    btn.textContent = k;
+    if (k === "Enter" || k === "⌫") btn.classList.add("wide");
+    btn.addEventListener("click", () => handleKey(k));
+    rowEl.appendChild(btn);
+    if (k !== "Enter" && k !== "⌫") keyMap[k] = btn;
+  });
+});
+
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  if (e.key === "Enter") handleKey("Enter");
+  else if (e.key === "Backspace") handleKey("⌫");
+  else if (/^[a-zA-Z]$/.test(e.key)) handleKey(e.key.toUpperCase());
+});
+
+function handleKey(key) {
+  if (gameOver) return;
+  if (key === "⌫") {
+    if (currentCol > 0) {
+      currentCol--;
+      currentGuess.pop();
+      const tile = tiles[currentRow][currentCol];
+      tile.textContent = "";
+      tile.removeAttribute("data-letter");
+    }
+    return;
+  }
+  if (key === "Enter") {
+    if (currentCol < WORD_LENGTH) { shakeTiles(); showToast("Not enough letters"); return; }
+    submitGuess();
+    return;
+  }
+  if (currentCol < WORD_LENGTH) {
+    const tile = tiles[currentRow][currentCol];
+    tile.textContent = key;
+    tile.setAttribute("data-letter", key);
+    tile.classList.remove("pop");
+    void tile.offsetWidth;
+    tile.classList.add("pop");
+    currentGuess.push(key);
+    currentCol++;
+  }
+}
+
+function submitGuess() {
+  const guess = currentGuess.join("");
+  const result = evaluate(guess, WORD);
+
+  result.forEach((state, i) => {
+    const tile = tiles[currentRow][i];
+    setTimeout(() => {
+      tile.classList.add("flip");
+      setTimeout(() => {
+        tile.classList.add(state);
+        const key = keyMap[guess[i]];
+        if (key) {
+          if (state === "correct") key.className = "key correct";
+          else if (state === "present" && !key.classList.contains("correct")) key.className = "key present";
+          else if (state === "absent" && !key.classList.contains("correct") && !key.classList.contains("present")) key.className = "key absent";
+        }
+      }, 250);
+    }, i * 300);
+  });
+
+  const won = result.every(s => s === "correct");
+  const totalDelay = (WORD_LENGTH - 1) * 300 + 600;
+
+  setTimeout(() => {
+    if (won) {
+      bounceRow(currentRow);
+      gameOver = true;
+      setTimeout(() => showReveal(true), 1200);
+    } else if (currentRow === MAX_GUESSES - 1) {
+      gameOver = true;
+      setTimeout(() => showReveal(false), 800);
+    }
+    currentRow++;
+    currentCol = 0;
+    currentGuess = [];
+  }, totalDelay);
+}
+
+function evaluate(guess, answer) {
+  const result = Array(WORD_LENGTH).fill("absent");
+  const answerArr = answer.split("");
+  const guessArr = guess.split("");
+  const used = Array(WORD_LENGTH).fill(false);
+  for (let i = 0; i < WORD_LENGTH; i++) {
+    if (guessArr[i] === answerArr[i]) { result[i] = "correct"; used[i] = true; }
+  }
+  for (let i = 0; i < WORD_LENGTH; i++) {
+    if (result[i] === "correct") continue;
+    for (let j = 0; j < WORD_LENGTH; j++) {
+      if (!used[j] && guessArr[i] === answerArr[j]) { result[i] = "present"; used[j] = true; break; }
+    }
+  }
+  return result;
+}
+
+function shakeTiles() {
+  for (let c = 0; c < currentCol; c++) {
+    const tile = tiles[currentRow][c];
+    tile.classList.remove("shake");
+    void tile.offsetWidth;
+    tile.classList.add("shake");
+  }
+}
+
+function bounceRow(row) {
+  for (let c = 0; c < WORD_LENGTH; c++) {
+    const tile = tiles[row][c];
+    setTimeout(() => {
+      tile.classList.add("bounce");
+      setTimeout(() => tile.classList.remove("bounce"), 800);
+    }, c * 100);
+  }
+}
+
+function showToast(msg, duration = 1200) {
+  const container = document.getElementById("toast-container");
+  const toast = document.createElement("div");
+  toast.classList.add("toast");
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => { toast.classList.add("fade-out"); setTimeout(() => toast.remove(), 400); }, duration);
+}
+
+function showReveal(won) {
+  const card = document.getElementById("reveal-card");
+  const mainLine = document.getElementById("reveal-main");
+  const overlay = document.getElementById("overlay");
+
+  mainLine.textContent = won
+    ? "Next date here, when?"
+    : "Uh oh, looks like we need to revisit PLATS";
+
+  overlay.classList.add("visible");
+  card.classList.add("visible");
+  requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add("shown")));
+
+  overlay.addEventListener("click", () => {
+    card.classList.remove("shown");
+    setTimeout(() => {
+      card.classList.remove("visible");
+      overlay.classList.remove("visible");
+    }, 500);
+  });
+}
+</script>
+</body>
+</html>
