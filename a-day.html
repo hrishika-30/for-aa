@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>A Puzzle For You</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #fdf6ee;
+    --surface:   #fff9f3;
+    --border:    #ddd0bb;
+    --cell-bg:   #fffdf9;
+    --active:    #f5d9a8;
+    --highlight: #fceedd;
+    --correct:   #c8e6c9;
+    --incorrect: #ffcdd2;
+    --gold:      #b5803a;
+    --gold-dim:  #c9a87a;
+    --ink:       #2e2416;
+    --ink-soft:  #6b5740;
+    --cell:      34px;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Jost', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 28px 14px 72px;
+  }
+
+  header { text-align: center; margin-bottom: 28px; }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(24px, 5.5vw, 34px);
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  h1 em { font-style: italic; color: var(--gold); }
+
+  .rule {
+    width: 50px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    margin: 14px auto 0;
+  }
+
+  .grid-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 14px;
+    padding-bottom: 2px;
+  }
+
+  .grid {
+    display: inline-grid;
+    grid-template-columns: repeat(18, var(--cell));
+    grid-template-rows: repeat(13, var(--cell));
+    gap: 1px;
+    background: var(--border);
+    border: 1.5px solid var(--border);
+  }
+
+  .cell {
+    width: var(--cell);
+    height: var(--cell);
+    background: var(--bg);
+  }
+
+  .cell.letter {
+    background: var(--cell-bg);
+    position: relative;
+    cursor: pointer;
+  }
+
+  .cell.letter.highlighted { background: var(--highlight); }
+  .cell.letter.active      { background: var(--active); }
+  .cell.letter.correct-bg  { background: var(--correct) !important; }
+  .cell.letter.incorrect-bg{ background: var(--incorrect) !important; }
+
+  .cell-num {
+    position: absolute;
+    top: 2px; left: 2px;
+    font-size: 7px;
+    font-family: 'Jost', sans-serif;
+    font-weight: 500;
+    color: var(--gold);
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .cell-input {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    text-transform: uppercase;
+    outline: none;
+    padding-top: 5px;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+  }
+
+  .cell-input.correct   { color: #2e7d32; }
+  .cell-input.incorrect { color: #c62828; }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+
+  button {
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.13s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active { transform: scale(0.96); }
+  .btn-primary { background: var(--gold); border-color: var(--gold); color: #fff; }
+
+  .clue-heading {
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .clues-block { margin-bottom: 4px; }
+
+  .clue-item {
+    display: flex;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 2px;
+    align-items: flex-start;
+    transition: background 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .clue-item:active { background: var(--highlight); }
+  .clue-item.active { background: var(--highlight); }
+  .clue-item.solved .clue-text {
+    opacity: 0.35;
+    text-decoration: line-through;
+    text-decoration-color: var(--gold-dim);
+  }
+
+  .clue-num {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gold-dim);
+    min-width: 18px;
+    padding-top: 1px;
+    flex-shrink: 0;
+  }
+
+  .clue-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-style: italic;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
+
+  .clue-divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .completion {
+    display: none;
+    text-align: center;
+    padding: 30px 20px;
+    margin-top: 28px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    animation: fadeUp 0.7s ease both;
+  }
+  .completion.show { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .completion-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-style: italic;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .completion-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--ink-soft);
+    line-height: 1.65;
+  }
+
+  @media (max-width: 420px) {
+    :root { --cell: 28px; }
+    .cell-input { font-size: 13px; padding-top: 4px; }
+    .cell-num { font-size: 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <p class="eyebrow">A puzzle for you</p>
+    <h1>Things that are <em>ours</em></h1>
+    <div class="rule"></div>
+  </header>
+
+  <div class="grid-scroll">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-primary" onclick="checkAll()">Check</button>
+    <button onclick="revealAll()">Reveal</button>
+    <button onclick="clearAll()">Clear</button>
+  </div>
+
+  <div class="clues-block">
+    <div class="clue-heading">Across</div>
+    <div id="across-clues"></div>
+  </div>
+  <div class="clue-divider"></div>
+  <div class="clues-block">
+    <div class="clue-heading">Down</div>
+    <div id="down-clues"></div>
+  </div>
+
+  <div class="completion" id="completion">
+    <div class="completion-title">You got there.</div>
+    <div class="completion-text">Hurray! Happy 30th year around the Sun, Arnav.</div>
+  </div>
+
+</div>
+<script>
+const ROWS = 13, COLS = 18;
+
+// Grid layout — NIGEL at col 12 (intersects SUPERLATIVE final E),
+// THAICURRY at col 10 row 3 (starts just below HIGHFIDELITY)
+const wordsPlaced = {
+  WATERMELON:   ['H', 0,  2],
+  HIGHFIDELITY: ['H', 2,  0],
+  REDSEER:      ['V', 0,  6],
+  SUPERLATIVE:  ['H', 6,  2],
+  THAICURRY:    ['V', 3, 10],
+  SIDECAR:      ['V', 6,  2],
+  YAKISOBA:     ['H', 11, 10],
+  NIGEL:        ['V', 3, 12],
+  MAHAL:        ['V', 5,  8],
+  KAVALA:       ['H', 11,  1],
+};
+
+const clueText = {
+  WATERMELON:   "The summer of 2025 was red and juicy.",
+  HIGHFIDELITY: "You love it but it took a second watch, and you beside me, for it to finally make sense.",
+  REDSEER:      "You hated it. I hated it. But we'd do it all again.",
+  SUPERLATIVE:  "The highest degree.",
+  THAICURRY:    "You, me, and the smell of lemongrass. The most comforting meal there is.",
+  SIDECAR:      "Twice. Same us, same stools, just different drinks.",
+  YAKISOBA:     "The order we never had to think about at that pan Asian place.",
+  NIGEL:        "Watching him tear apart everyone else's methods is one of our go-to things.",
+  MAHAL:        "Top 0.1% listeners, both of us.",
+  KAVALA:       "We do it together before bed. PS. think Ayurvedic.",
+};
+
+// Build cell map
+const cellMap = {};
+const wordCells = {};
+for (const [word, [dir, sr, sc]] of Object.entries(wordsPlaced)) {
+  wordCells[word] = [];
+  for (let i = 0; i < word.length; i++) {
+    const r = dir === 'H' ? sr     : sr + i;
+    const c = dir === 'H' ? sc + i : sc;
+    cellMap[`${r},${c}`] = word[i];
+    wordCells[word].push({r, c});
+  }
+}
+
+// Number cells. Key fix: a cell is a "down start" if it is the declared
+// first cell of a vertical word (even if the cell above is occupied by
+// a crossing horizontal word).
+const numberedCells = {};
+let counter = 1;
+const across = [], down = [];
+
+// Build lookup: which vertical word starts at each cell?
+const vWordStartAt = {};
+for (const [word, [dir, sr, sc]] of Object.entries(wordsPlaced)) {
+  if (dir === 'V') vWordStartAt[`${sr},${sc}`] = word;
+}
+
+for (let r = 0; r < ROWS; r++) {
+  for (let c = 0; c < COLS; c++) {
+    const key = `${r},${c}`;
+    if (!cellMap[key]) continue;
+
+    const isAcross = (c === 0 || !cellMap[`${r},${c-1}`]) && !!cellMap[`${r},${c+1}`];
+    // Natural down start OR declared vertical word start
+    const naturalDown = (r === 0 || !cellMap[`${r-1},${c}`]) && !!cellMap[`${r+1},${c}`];
+    const declaredDown = !!vWordStartAt[key];
+    const isDown = naturalDown || declaredDown;
+
+    if (isAcross || isDown) {
+      numberedCells[key] = counter;
+
+      if (isAcross) {
+        for (const [word, [dir, sr, sc]] of Object.entries(wordsPlaced)) {
+          if (dir === 'H' && sr === r && sc === c) { across.push({num: counter, word}); break; }
+        }
+      }
+      if (isDown) {
+        const dWord = vWordStartAt[key];
+        if (dWord) down.push({num: counter, word: dWord});
+      }
+      counter++;
+    }
+  }
+}
+
+// State
+const userGrid = {};
+let activeWord = null, activeCell = null, lastDir = 'H';
+
+// Build grid DOM
+const gridEl = document.getElementById('grid');
+for (let r = 0; r < ROWS; r++) {
+  for (let c = 0; c < COLS; c++) {
+    const key = `${r},${c}`;
+    const div = document.createElement('div');
+    div.className = 'cell' + (cellMap[key] ? ' letter' : '');
+    div.dataset.r = r; div.dataset.c = c;
+    if (cellMap[key]) {
+      if (numberedCells[key]) {
+        const span = document.createElement('span');
+        span.className = 'cell-num';
+        span.textContent = numberedCells[key];
+        div.appendChild(span);
+      }
+      const inp = document.createElement('input');
+      inp.className = 'cell-input';
+      inp.type = 'text';
+      inp.inputMode = 'text';
+      inp.autocomplete = 'off';
+      inp.autocorrect = 'off';
+      inp.autocapitalize = 'characters';
+      inp.spellcheck = false;
+      inp.maxLength = 1;
+      inp.dataset.r = r; inp.dataset.c = c;
+      inp.addEventListener('focus',   () => handleFocus(r, c));
+      inp.addEventListener('input',   e  => handleInput(e, r, c));
+      inp.addEventListener('keydown', e  => handleKeydown(e, r, c));
+      div.appendChild(inp);
+    }
+    gridEl.appendChild(div);
+  }
+}
+
+// Render clues
+function renderClues() {
+  const aEl = document.getElementById('across-clues');
+  const dEl = document.getElementById('down-clues');
+  aEl.innerHTML = ''; dEl.innerHTML = '';
+  for (const {num, word} of across) aEl.appendChild(makeClueItem(num, word, 'H'));
+  for (const {num, word} of down)   dEl.appendChild(makeClueItem(num, word, 'V'));
+}
+
+function makeClueItem(num, word, dir) {
+  const div = document.createElement('div');
+  div.className = 'clue-item';
+  div.id = `clue-${dir}-${word}`;
+  div.innerHTML = `<span class="clue-num">${num}</span><span class="clue-text">${clueText[word]}</span>`;
+  div.addEventListener('click', () => selectWord(word, dir));
+  return div;
+}
+renderClues();
+
+// Helpers
+const getInput  = (r,c) => gridEl.querySelector(`input[data-r="${r}"][data-c="${c}"]`);
+const getCellEl = (r,c) => gridEl.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+
+function getWordForCell(r, c, preferDir) {
+  const candidates = [];
+  for (const [word, [dir]] of Object.entries(wordsPlaced)) {
+    if (wordCells[word].some(p => p.r === r && p.c === c)) candidates.push({word, dir});
+  }
+  if (!candidates.length) return null;
+  if (candidates.length === 1) return candidates[0];
+  return candidates.find(x => x.dir === preferDir) || candidates[0];
+}
+
+function selectWord(word, dir, focusR, focusC) {
+  document.querySelectorAll('.cell.letter').forEach(el => el.classList.remove('highlighted','active'));
+  document.querySelectorAll('.clue-item').forEach(el => el.classList.remove('active'));
+  activeWord = word; lastDir = dir;
+  wordCells[word].forEach(({r,c}) => getCellEl(r,c)?.classList.add('highlighted'));
+  const clueEl = document.getElementById(`clue-${dir}-${word}`);
+  if (clueEl) { clueEl.classList.add('active'); clueEl.scrollIntoView({behavior:'smooth', block:'nearest'}); }
+  let target;
+  if (focusR !== undefined) {
+    target = {r: focusR, c: focusC};
+  } else {
+    target = wordCells[word].find(({r,c}) => !userGrid[`${r},${c}`]) || wordCells[word][0];
+  }
+  activeCell = target;
+  getCellEl(target.r, target.c)?.classList.add('active');
+  const inp = getInput(target.r, target.c);
+  if (inp && document.activeElement !== inp) inp.focus();
+}
+
+function handleFocus(r, c) {
+  const result = getWordForCell(r, c, lastDir);
+  if (!result) return;
+  if (activeCell?.r === r && activeCell?.c === c && activeWord) {
+    const other = lastDir === 'H' ? 'V' : 'H';
+    const alt = getWordForCell(r, c, other);
+    if (alt && alt.word !== activeWord) { selectWord(alt.word, alt.dir, r, c); return; }
+  }
+  selectWord(result.word, result.dir, r, c);
+}
+
+function handleInput(e, r, c) {
+  const raw = e.target.value.toUpperCase().replace(/[^A-Z]/g,'');
+  const letter = raw ? raw[raw.length-1] : '';
+  e.target.value = letter;
+  e.target.classList.remove('correct','incorrect');
+  getCellEl(r,c)?.classList.remove('correct-bg','incorrect-bg');
+  if (letter) { userGrid[`${r},${c}`] = letter; advanceCursor(r, c); }
+  else delete userGrid[`${r},${c}`];
+  checkCompletion();
+}
+
+function handleKeydown(e, r, c) {
+  if (e.key === 'Backspace') {
+    const inp = getInput(r,c);
+    if (inp?.value === '') {
+      retreatCursor(r, c);
+    } else {
+      if (inp) { inp.value = ''; inp.classList.remove('correct','incorrect'); }
+      getCellEl(r,c)?.classList.remove('correct-bg','incorrect-bg');
+      delete userGrid[`${r},${c}`];
+    }
+    e.preventDefault();
+  } else if (e.key==='ArrowRight') { moveTo(r, c+1); e.preventDefault(); }
+    else if (e.key==='ArrowLeft')  { moveTo(r, c-1); e.preventDefault(); }
+    else if (e.key==='ArrowDown')  { moveTo(r+1, c); e.preventDefault(); }
+    else if (e.key==='ArrowUp')    { moveTo(r-1, c); e.preventDefault(); }
+    else if (e.key==='Tab')        { e.preventDefault(); advanceWord(e.shiftKey?-1:1); }
+}
+
+function moveTo(r,c) { getInput(r,c)?.focus(); }
+
+function advanceCursor(r, c) {
+  if (!activeWord) return;
+  const cells = wordCells[activeWord];
+  const idx = cells.findIndex(p => p.r===r && p.c===c);
+  if (idx < cells.length-1) {
+    const next = cells[idx+1];
+    activeCell = next;
+    getInput(next.r, next.c)?.focus();
+  }
+}
+
+function retreatCursor(r, c) {
+  if (!activeWord) return;
+  const cells = wordCells[activeWord];
+  const idx = cells.findIndex(p => p.r===r && p.c===c);
+  if (idx > 0) {
+    const prev = cells[idx-1];
+    activeCell = prev;
+    const inp = getInput(prev.r, prev.c);
+    if (inp) { inp.value=''; inp.classList.remove('correct','incorrect'); delete userGrid[`${prev.r},${prev.c}`]; inp.focus(); }
+    getCellEl(prev.r, prev.c)?.classList.remove('correct-bg','incorrect-bg');
+  }
+}
+
+function advanceWord(delta) {
+  const all = [...across,...down];
+  if (!activeWord) { selectWord(all[0].word, all[0].dir); return; }
+  const idx = all.findIndex(x => x.word===activeWord);
+  const next = all[(idx+delta+all.length)%all.length];
+  selectWord(next.word, next.dir);
+}
+
+function checkAll() {
+  for (const [key, letter] of Object.entries(cellMap)) {
+    const [r,c] = key.split(',').map(Number);
+    const inp = getInput(r,c); const cel = getCellEl(r,c);
+    if (!inp || !inp.value) continue;
+    inp.classList.remove('correct','incorrect');
+    cel?.classList.remove('correct-bg','incorrect-bg');
+    if (inp.value === letter) { inp.classList.add('correct'); cel?.classList.add('correct-bg'); }
+    else                      { inp.classList.add('incorrect'); cel?.classList.add('incorrect-bg'); }
+  }
+  markSolvedClues(); checkCompletion();
+}
+
+function revealAll() {
+  for (const [key, letter] of Object.entries(cellMap)) {
+    const [r,c] = key.split(',').map(Number);
+    const inp = getInput(r,c); const cel = getCellEl(r,c);
+    if (!inp) continue;
+    inp.value = letter; userGrid[key] = letter;
+    inp.classList.remove('incorrect'); cel?.classList.remove('incorrect-bg');
+    inp.classList.add('correct'); cel?.classList.add('correct-bg');
+  }
+  markSolvedClues(); checkCompletion();
+}
+
+function clearAll() {
+  for (const key of Object.keys(cellMap)) {
+    const [r,c] = key.split(',').map(Number);
+    const inp = getInput(r,c);
+    if (!inp) continue;
+    inp.value = ''; inp.classList.remove('correct','incorrect');
+    getCellEl(r,c)?.classList.remove('correct-bg','incorrect-bg');
+    delete userGrid[key];
+  }
+  document.querySelectorAll('.clue-item').forEach(el=>el.classList.remove('solved'));
+  document.getElementById('completion').classList.remove('show');
+}
+
+function markSolvedClues() {
+  for (const {word} of [...across,...down]) {
+    const dir = wordsPlaced[word][0];
+    const solved = wordCells[word].every(({r,c})=>userGrid[`${r},${c}`]===cellMap[`${r},${c}`]);
+    document.getElementById(`clue-${dir}-${word}`)?.classList.toggle('solved', solved);
+  }
+}
+
+function checkCompletion() {
+  markSolvedClues();
+  if (Object.keys(cellMap).every(k => userGrid[k]===cellMap[k])) {
+    document.getElementById('completion').classList.add('show');
+  }
+}
+
+window.addEventListener('load', () => { if (across.length) selectWord(across[0].word,'H'); });
+</script>
+</body>
+</html>
